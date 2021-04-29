@@ -106,14 +106,25 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
 //        url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
+        //todo，可能返回 MockedClient？ 或者 HeaderExchangeClient （默认）。 MockedClient还没看明白什么时候返回
         return getExchanger(url).connect(url, handler);
     }
 
+    /**
+     * 从URL的参数中获取"exchanger"，对应成类型，并根据类型获取Exchanger
+     * @param url
+     * @return
+     */
     public static Exchanger getExchanger(URL url) {
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
         return getExchanger(type);
     }
 
+    /**
+     * 根据类型获取Exchanger，dubbo自己的SPI方式
+     * @param type
+     * @return
+     */
     public static Exchanger getExchanger(String type) {
         return ExtensionLoader.getExtensionLoader(Exchanger.class).getExtension(type);
     }

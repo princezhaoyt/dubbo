@@ -59,6 +59,16 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
  */
 public class DubboInvoker<T> extends AbstractInvoker<T> {
 
+    /**
+     * 根据86行的构造函数，此ExchangeClient接口的具体实现类为：如果是共享的连接：则为ReferenceCountExchangeClient（todo，没明白 如果是这个，则直接调用HeaderExchangeClient？ ），
+     *                                                    否则，以其他方式初始化，可能为LazyConnectExchangeClient或
+     *                                                    HeaderExchangeClient
+     * 具体调用为：step1: org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#protocolBindingRefer(java.lang.Class, org.apache.dubbo.common.URL)
+     *           step2: org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#getClients(org.apache.dubbo.common.URL)
+     *           step3: org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#getSharedClient(org.apache.dubbo.common.URL, int)
+     *                  或
+     *                  org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#initClient(org.apache.dubbo.common.URL)
+     */
     private final ExchangeClient[] clients;
 
     private final AtomicPositiveInteger index = new AtomicPositiveInteger();
@@ -89,21 +99,29 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         inv.setAttachment(VERSION_KEY, version);
 
         ExchangeClient currentClient;
+        //选执行的服务提供方
         if (clients.length == 1) {
             currentClient = clients[0];
         } else {
+            //同一个服务，如果有多个服务提供方，则根据调用的次数，取模路由
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
         try {
+            //是否单向通信
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
             int timeout = calculateTimeout(invocation, methodName);
             invocation.put(TIMEOUT_KEY, timeout);
             if (isOneway) {
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
                 currentClient.send(inv, isSent);
+                //单向通信，无需等待调用结果，直接返回默认结果
                 return AsyncRpcResult.newDefaultAsyncResult(invocation);
             } else {
+                //todo，获取对应线程池，但是根据什么规则维护，什么规则获取，没看懂
                 ExecutorService executor = getCallbackExecutor(getUrl(), inv);
+                /**
+                 * 先调用currentClient.request(inv, timeout, executor)，然后用thenApply把两个线程串行化，把结果转化为AppResponse
+                 */
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(obj -> (AppResponse) obj);
                 // save for 2.6.x compatibility, for example, TraceFilter in Zipkin uses com.alibaba.xxx.FutureAdapter

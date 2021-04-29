@@ -33,6 +33,7 @@ import static org.apache.dubbo.remoting.Constants.SEND_RECONNECT_KEY;
 import static org.apache.dubbo.rpc.protocol.dubbo.Constants.LAZY_CONNECT_INITIAL_STATE_KEY;
 
 /**
+ * todo，貌似共享连接client
  * dubbo protocol support class.
  */
 @SuppressWarnings("deprecation")

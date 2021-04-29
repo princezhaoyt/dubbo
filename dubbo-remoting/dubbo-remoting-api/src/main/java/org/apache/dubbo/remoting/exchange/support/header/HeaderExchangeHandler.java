@@ -169,11 +169,15 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
             // handle request.
             Request request = (Request) message;
             if (request.isEvent()) {
+                //处理事件请求
                 handlerEvent(channel, request);
             } else {
+                //处理普通请求
                 if (request.isTwoWay()) {
+                    //处理双向通信请求
                     handleRequest(exchangeChannel, request);
                 } else {
+                    //处理单向通信请求
                     handler.received(exchangeChannel, request.getData());
                 }
             }

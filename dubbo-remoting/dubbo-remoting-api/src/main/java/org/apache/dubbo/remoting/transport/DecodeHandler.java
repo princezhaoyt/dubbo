@@ -26,6 +26,11 @@ import org.apache.dubbo.remoting.RemotingException;
 import org.apache.dubbo.remoting.exchange.Request;
 import org.apache.dubbo.remoting.exchange.Response;
 
+/**
+ * 抽离出的解码逻辑，
+ * dubbo的解码可以根据配置，选择在IO线程执行，也可以在线程池执行，
+ * 此handler存在的意义，就是使得IO线程可以执行解码
+ */
 public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     private static final Logger log = LoggerFactory.getLogger(DecodeHandler.class);
@@ -34,20 +39,31 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
         super(handler);
     }
 
+    /**
+     *
+     *
+     * @param channel
+     * @param message
+     * @throws RemotingException
+     */
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         if (message instanceof Decodeable) {
+            // 对 Decodeable 接口实现类对象进行解码
             decode(message);
         }
 
         if (message instanceof Request) {
+            //对request的data进行解码
             decode(((Request) message).getData());
         }
 
         if (message instanceof Response) {
+            //对response的result进行解码
             decode(((Response) message).getResult());
         }
 
+        //调用HeaderExchangeHandler
         handler.received(channel, message);
     }
 

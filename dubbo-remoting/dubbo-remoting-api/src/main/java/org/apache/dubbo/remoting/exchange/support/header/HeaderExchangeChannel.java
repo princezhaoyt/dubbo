@@ -134,6 +134,10 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         req.setData(request);
         DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
         try {
+            /**
+             * 这个channel应该也是根据SPI来看走netty还是别的。
+             * NettyClient中，并没有重写send方法，所以依次调用父类的AbstractPeer->AbstractClient->NettyChannel的send，
+             */
             channel.send(req);
         } catch (RemotingException e) {
             future.cancel();

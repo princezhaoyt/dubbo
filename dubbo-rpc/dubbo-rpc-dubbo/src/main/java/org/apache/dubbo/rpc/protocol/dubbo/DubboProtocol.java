@@ -411,9 +411,13 @@ public class DubboProtocol extends AbstractProtocol {
 
         boolean useShareConnect = false;
 
+        //todo，此处是根据URL的"connections"参数，来确定是否使用共享连接，但是这个参数从哪儿来，什么时候设置，需要再跟进
         int connections = url.getParameter(CONNECTIONS_KEY, 0);
         List<ReferenceCountExchangeClient> shareClients = null;
         // if not configured, connection is shared, otherwise, one connection for one service
+        /**
+         * 如果该参数未设置，则默认使用共享连接，否则，一次调用一个连接
+         */
         if (connections == 0) {
             useShareConnect = true;
 
@@ -428,10 +432,12 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeClient[] clients = new ExchangeClient[connections];
         for (int i = 0; i < clients.length; i++) {
+            //如果使用共享连接，则从shareClients中获取，返回的是ReferenceCountExchangeClient实现类
             if (useShareConnect) {
                 clients[i] = shareClients.get(i);
 
             } else {
+                //todo，还没看进去如果不是共享连接，则重新初始化，可能为LazyConnectExchangeClient，或其他
                 clients[i] = initClient(url);
             }
         }
@@ -607,6 +613,10 @@ public class DubboProtocol extends AbstractProtocol {
         ExchangeClient client;
         try {
             // connection should be lazy
+            /**
+             * 根据URL中“lazy”参数，判断，是否LazyConnectExchangeClient，是则初始化LazyConnectExchangeClient，
+             * todo：否则，
+             */
             if (url.getParameter(LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
 

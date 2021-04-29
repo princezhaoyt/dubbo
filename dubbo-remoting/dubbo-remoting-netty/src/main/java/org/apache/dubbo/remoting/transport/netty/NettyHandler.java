@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * rpc接口提供方，使用netty的情况下，接受client请求的入口
  * NettyHandler
  */
 @Sharable
@@ -99,6 +100,10 @@ public class NettyHandler extends SimpleChannelHandler {
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.getChannel(), url, handler);
         try {
+            /**
+             * 此处与send类似，handler为NettyServer，没有实现received方法，所以调用父类AbstractPeer的方法，
+             * AbstractPeer交由子类执行方法，如AllChannelHandler
+             */
             handler.received(channel, e.getMessage());
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.getChannel());

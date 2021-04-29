@@ -43,7 +43,7 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 
 /**
  * RPC Invocation.
- *
+ * 所有rpc过程中，网络传输的对象
  * @serial Don't change the class name and properties.
  */
 public class RpcInvocation implements Invocation, Serializable {
